@@ -5,7 +5,7 @@ A comprehensive school management system built with Expo (React Native) for mobi
 
 ## Technology Stack
 - **Frontend:** Expo SDK 54, React Native, expo-router
-- **Backend:** FastAPI (Python), Socket.IO for real-time chat
+- **Backend:** Node.js Express.js, Socket.IO for real-time chat
 - **Database:** MongoDB
 - **Auth:** JWT-based custom authentication with bcrypt
 
