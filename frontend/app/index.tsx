@@ -71,22 +71,28 @@ export default function LoginScreen() {
     }
   };
 
+  const isWeb = Platform.OS === 'web';
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <View style={styles.logoCircle}>
-              <Ionicons name="school" size={40} color={COLORS.surface} />
+        <ScrollView
+          contentContainerStyle={[styles.scroll, isWeb && styles.scrollWeb]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[isWeb && styles.webFormWrap]}>
+            <View style={[styles.header, isWeb && styles.headerWeb]}>
+              <View style={[styles.logoCircle, isWeb && styles.logoCircleWeb]}>
+                <Ionicons name="school" size={isWeb ? 32 : 40} color={COLORS.surface} />
+              </View>
+              <Text style={[styles.title, isWeb && styles.titleWeb]}>SchoolHub</Text>
+              <Text style={[styles.subtitle, isWeb && styles.subtitleWeb]}>Manage your school efficiently</Text>
             </View>
-            <Text style={styles.title}>SchoolHub</Text>
-            <Text style={styles.subtitle}>Manage your school efficiently</Text>
-          </View>
 
-          <View style={styles.card}>
+            <View style={[styles.card, isWeb && styles.cardWeb]}>
             <View style={styles.tabRow}>
               <TouchableOpacity
                 testID="login-tab"
@@ -189,6 +195,7 @@ export default function LoginScreen() {
                 Principal: principal@school.com / Admin@123
               </Text>
             )}
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -200,18 +207,44 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   center: { justifyContent: 'center', alignItems: 'center' },
   scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40 },
+  scrollWeb: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 32,
+    paddingBottom: 32,
+    paddingHorizontal: 24,
+  },
+  webFormWrap: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+  },
   header: { alignItems: 'center', marginBottom: 32 },
+  headerWeb: { marginBottom: 20 },
   logoCircle: {
     width: 80, height: 80, borderRadius: 24, backgroundColor: COLORS.primary,
     justifyContent: 'center', alignItems: 'center', marginBottom: 16,
   },
+  logoCircleWeb: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    marginBottom: 12,
+  },
   title: { fontSize: 32, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
+  titleWeb: { fontSize: 26 },
   subtitle: { fontSize: 16, color: COLORS.textSec, marginTop: 4 },
+  subtitleWeb: { fontSize: 14 },
   card: {
     backgroundColor: COLORS.surface, borderRadius: 16, padding: 24,
     borderWidth: 1, borderColor: COLORS.border,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+  },
+  cardWeb: {
+    padding: 20,
+    borderRadius: 14,
   },
   tabRow: {
     flexDirection: 'row', backgroundColor: COLORS.bg, borderRadius: 12,
