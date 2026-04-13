@@ -1,0 +1,197 @@
+{
+  "project_type": "react_native_expo",
+  "theme": "light",
+  "archetype": "Archetype 6 (Vibrant Play) combined with functional Archetype 4 (Swiss & High-Contrast) for data clarity",
+  "colors": {
+    "background": "#F7F9FC",
+    "surface": "#FFFFFF",
+    "primary": "#4361EE",
+    "primaryLight": "#E8EFFF",
+    "secondary": "#F72585",
+    "accentTeal": "#2EC4B6",
+    "accentYellow": "#FF9F1C",
+    "text": {
+      "primary": "#1E2022",
+      "secondary": "#707A8A",
+      "tertiary": "#A0AABF",
+      "inverse": "#FFFFFF"
+    },
+    "border": {
+      "light": "#EAECEF",
+      "focus": "#4361EE"
+    },
+    "status": {
+      "success": "#2EC4B6",
+      "error": "#E63946",
+      "warning": "#FF9F1C",
+      "info": "#4CC9F0"
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "heading": "System",
+      "body": "System"
+    },
+    "weights": {
+      "regular": "400",
+      "medium": "500",
+      "semibold": "600",
+      "bold": "700",
+      "heavy": "800"
+    },
+    "sizes": {
+      "h1": { "fontSize": 32, "lineHeight": 40, "fontWeight": "800", "letterSpacing": -0.5 },
+      "h2": { "fontSize": 24, "lineHeight": 32, "fontWeight": "700", "letterSpacing": -0.5 },
+      "h3": { "fontSize": 20, "lineHeight": 28, "fontWeight": "600" },
+      "body": { "fontSize": 16, "lineHeight": 24, "fontWeight": "400" },
+      "bodySmall": { "fontSize": 14, "lineHeight": 20, "fontWeight": "400" },
+      "caption": { "fontSize": 12, "lineHeight": 16, "fontWeight": "500", "textTransform": "uppercase", "letterSpacing": 0.5 }
+    }
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radii": {
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "full": 9999
+  },
+  "shadows": {
+    "card": {
+      "shadowColor": "#000",
+      "shadowOffset": { "width": 0, "height": 2 },
+      "shadowOpacity": 0.05,
+      "shadowRadius": 8,
+      "elevation": 2
+    },
+    "dropdown": {
+      "shadowColor": "#000",
+      "shadowOffset": { "width": 0, "height": 4 },
+      "shadowOpacity": 0.1,
+      "shadowRadius": 12,
+      "elevation": 4
+    }
+  },
+  "components": {
+    "button": {
+      "primary": {
+        "backgroundColor": "#4361EE",
+        "borderRadius": 16,
+        "paddingVertical": 16,
+        "paddingHorizontal": 24,
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      "secondary": {
+        "backgroundColor": "#E8EFFF",
+        "borderRadius": 16,
+        "paddingVertical": 16,
+        "paddingHorizontal": 24,
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      "outline": {
+        "backgroundColor": "transparent",
+        "borderWidth": 1,
+        "borderColor": "#EAECEF",
+        "borderRadius": 16,
+        "paddingVertical": 16,
+        "paddingHorizontal": 24,
+        "alignItems": "center",
+        "justifyContent": "center"
+      }
+    },
+    "card": {
+      "backgroundColor": "#FFFFFF",
+      "borderRadius": 16,
+      "padding": 20,
+      "borderWidth": 1,
+      "borderColor": "#EAECEF",
+      "shadowColor": "#000",
+      "shadowOffset": { "width": 0, "height": 2 },
+      "shadowOpacity": 0.05,
+      "shadowRadius": 8,
+      "elevation": 2
+    },
+    "input": {
+      "backgroundColor": "#F7F9FC",
+      "borderRadius": 12,
+      "padding": 16,
+      "borderWidth": 1,
+      "borderColor": "#EAECEF",
+      "fontSize": 16,
+      "color": "#1E2022"
+    },
+    "tabBar": {
+      "backgroundColor": "#FFFFFF",
+      "borderTopWidth": 1,
+      "borderTopColor": "#EAECEF",
+      "paddingTop": 12,
+      "paddingBottom": 24,
+      "height": 84
+    }
+  },
+  "screens": {
+    "login": {
+      "layout": "Screen background should use background color, large bold typography for welcome. Input fields should be generously spaced. Primary button for login.",
+      "hero_image": "login_background"
+    },
+    "principal_dashboard": {
+      "layout": "Use a Bento Grid style. Row of summary cards (Total Students, Total Teachers) using accent colors. Followed by a FlatList of recent activities or quick links."
+    },
+    "teacher_dashboard": {
+      "layout": "Personalized greeting. Quick actions row (Enter Marks, Take Attendance). Section for assigned classes using Card components."
+    },
+    "class_management": {
+      "layout": "FlatList of classes and sections. Each item should be a touchable Card showing class name, class teacher, and student count."
+    },
+    "chat": {
+      "layout": "Standard chat interface. Messages list using FlatList. Differentiate sender/receiver with primary vs surface bubble backgrounds. Use safe area for input box."
+    }
+  },
+  "media": {
+    "login_background": {
+      "url": "https://images.unsplash.com/photo-1713188090500-a4fb0d2cf309?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2OTV8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGNvbG9yZnVsJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzYwNzI1MTB8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Abstract colorful background for the login screen top half or background."
+    },
+    "school_building": {
+      "url": "https://images.unsplash.com/photo-1603958956194-cf9718dba4b1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBzY2hvb2wlMjBidWlsZGluZ3xlbnwwfHx8fDE3NzYwNzI1MDV8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Modern school building for dashboard headers or about section."
+    },
+    "teacher_avatar_1": {
+      "url": "https://images.unsplash.com/photo-1758685734511-4f49ce9a382b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjB0ZWFjaGVyJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzc2MDcyNTA1fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Teacher portrait for profile or chat."
+    },
+    "teacher_avatar_2": {
+      "url": "https://images.pexels.com/photos/5905753/pexels-photo-5905753.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Teacher portrait for profile or chat."
+    },
+    "student_avatar_1": {
+      "url": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2MzR8MHwxfHNlYXJjaHw0fHxzdHVkZW50JTIwcG9ydHJhaXR8ZW58MHx8fHwxNzc2MDYyMDQ2fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Student portrait for roster."
+    },
+    "student_avatar_2": {
+      "url": "https://images.pexels.com/photos/6281951/pexels-photo-6281951.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Student portrait for roster."
+    }
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: This is a React Native Expo application. DO NOT use HTML elements (div, span, etc.). DO NOT use Tailwind CSS classes.",
+    "Use ONLY React Native components: View, Text, TouchableOpacity, ScrollView, FlatList, TextInput, Image.",
+    "Use StyleSheet.create() for all styling, following the spacing and color tokens defined in this JSON.",
+    "Navigation MUST use expo-router file-based routing. Define tabs in a (tabs) layout.",
+    "Authentication: JWT logic must be implemented correctly, distinguishing between Teacher and Principal roles.",
+    "For icons, use @expo/vector-icons (e.g., Ionicons, Feather). DO NOT attempt to install lucide-react or HTML-based SVG icons.",
+    "Include 'testID' (React Native equivalent of data-testid) on all interactive elements: buttons, inputs, list items.",
+    "Cards and sections must utilize the generous spacing provided in the radii and padding rules.",
+    "Avoid generic center alignment for heavy data. Left-align text and lists for scanability."
+  ]
+}
