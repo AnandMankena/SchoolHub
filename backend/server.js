@@ -6,9 +6,9 @@ const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
 const http = require('http');
 const cors = require('cors');
-const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
+const { randomUUID } = require('crypto');
 
 // ============================================================
 // Configuration
@@ -191,7 +191,7 @@ app.post('/api/auth/register', async (req, res) => {
     const emailLower = email.toLowerCase().trim();
     const existing = await User.findOne({ email: emailLower });
     if (existing) return res.status(400).json({ detail: 'Email already registered' });
-    const userId = uuidv4();
+    const userId = randomUUID();
     const hash = await bcrypt.hash(password, 10);
     await User.create({ id: userId, email: emailLower, password_hash: hash, name, role: 'teacher', is_approved: false, created_at: now() });
     res.json({ message: 'Registration successful. Please wait for principal approval.', user_id: userId });
@@ -267,7 +267,7 @@ app.post('/api/teachers/create', authenticate, async (req, res) => {
     const emailLower = email.toLowerCase().trim();
     const existing = await User.findOne({ email: emailLower });
     if (existing) return res.status(400).json({ detail: 'Email already registered' });
-    const teacherId = uuidv4();
+    const teacherId = randomUUID();
     const hash = await bcrypt.hash(password, 10);
     const teacher = await User.create({ id: teacherId, email: emailLower, password_hash: hash, name, role: 'teacher', is_approved: true, created_at: now() });
     const t = clean(teacher);
@@ -311,7 +311,7 @@ app.get('/api/classes', authenticate, async (req, res) => {
 app.post('/api/classes', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'principal') return res.status(403).json({ detail: 'Only principal can create classes' });
-    const classId = uuidv4();
+    const classId = randomUUID();
     const cls = await Class.create({ id: classId, name: req.body.name, order: isNaN(req.body.name) ? 0 : parseInt(req.body.name), created_at: now() });
     res.json({ class: clean(cls) });
   } catch (err) { res.status(500).json({ detail: err.message }); }
@@ -345,7 +345,7 @@ app.get('/api/classes/:classId', authenticate, async (req, res) => {
 app.post('/api/sections', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'principal') return res.status(403).json({ detail: 'Only principal can create sections' });
-    const section = await Section.create({ id: uuidv4(), class_id: req.body.class_id, name: req.body.name, class_teacher_id: req.body.class_teacher_id || null, created_at: now() });
+    const section = await Section.create({ id: randomUUID(), class_id: req.body.class_id, name: req.body.name, class_teacher_id: req.body.class_teacher_id || null, created_at: now() });
     res.json({ section: clean(section) });
   } catch (err) { res.status(500).json({ detail: err.message }); }
 });
@@ -411,7 +411,7 @@ app.post('/api/subjects', authenticate, async (req, res) => {
       const section = await Section.findOne({ class_teacher_id: req.user.id, class_id: req.body.class_id });
       if (!section) return res.status(403).json({ detail: 'Only principal or class teacher can add subjects' });
     }
-    const subject = await Subject.create({ id: uuidv4(), name: req.body.name, class_id: req.body.class_id, teacher_id: req.body.teacher_id || null, created_at: now() });
+    const subject = await Subject.create({ id: randomUUID(), name: req.body.name, class_id: req.body.class_id, teacher_id: req.body.teacher_id || null, created_at: now() });
     res.json({ subject: clean(subject) });
   } catch (err) { res.status(500).json({ detail: err.message }); }
 });
@@ -450,7 +450,7 @@ app.post('/api/students', authenticate, async (req, res) => {
   try {
     const section = await Section.findOne({ id: req.body.section_id }).select('-_id -__v').lean();
     if (!section) return res.status(404).json({ detail: 'Section not found' });
-    const student = await Student.create({ id: uuidv4(), name: req.body.name, roll_number: req.body.roll_number, section_id: req.body.section_id, class_id: section.class_id, created_at: now() });
+    const student = await Student.create({ id: randomUUID(), name: req.body.name, roll_number: req.body.roll_number, section_id: req.body.section_id, class_id: section.class_id, created_at: now() });
     res.json({ student: clean(student) });
   } catch (err) { res.status(500).json({ detail: err.message }); }
 });
@@ -512,7 +512,7 @@ app.get('/api/exams', authenticate, async (req, res) => {
 app.post('/api/exams', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'principal') return res.status(403).json({ detail: 'Only principal can create exams' });
-    const exam = await Exam.create({ id: uuidv4(), name: req.body.name, class_id: req.body.class_id, total_marks: req.body.total_marks || 100, created_at: now() });
+    const exam = await Exam.create({ id: randomUUID(), name: req.body.name, class_id: req.body.class_id, total_marks: req.body.total_marks || 100, created_at: now() });
     res.json({ exam: clean(exam) });
   } catch (err) { res.status(500).json({ detail: err.message }); }
 });
@@ -537,7 +537,7 @@ app.post('/api/marks/enter', authenticate, async (req, res) => {
     for (const entry of marks) {
       await Mark.updateOne(
         { student_id: entry.student_id, subject_id, exam_id },
-        { $set: { id: uuidv4(), student_id: entry.student_id, subject_id, exam_id, section_id, marks_obtained: entry.marks_obtained, total_marks: exam.total_marks, entered_by: req.user.id, updated_at: now() } },
+        { $set: { id: randomUUID(), student_id: entry.student_id, subject_id, exam_id, section_id, marks_obtained: entry.marks_obtained, total_marks: exam.total_marks, entered_by: req.user.id, updated_at: now() } },
         { upsert: true }
       );
     }
@@ -613,7 +613,7 @@ app.post('/api/attendance/mark', authenticate, async (req, res) => {
     for (const entry of attendance) {
       await Attendance.updateOne(
         { student_id: entry.student_id, date },
-        { $set: { id: uuidv4(), student_id: entry.student_id, section_id, date, status: entry.status, marked_by: req.user.id, updated_at: now() } },
+        { $set: { id: randomUUID(), student_id: entry.student_id, section_id, date, status: entry.status, marked_by: req.user.id, updated_at: now() } },
         { upsert: true }
       );
     }
@@ -651,7 +651,7 @@ app.get('/api/chat/groups', authenticate, async (req, res) => {
 app.post('/api/chat/groups', authenticate, async (req, res) => {
   try {
     const members = [...new Set([req.user.id, ...(req.body.member_ids || [])])];
-    const group = await ChatGroup.create({ id: uuidv4(), name: req.body.name, created_by: req.user.id, members, created_at: now() });
+    const group = await ChatGroup.create({ id: randomUUID(), name: req.body.name, created_by: req.user.id, members, created_at: now() });
     res.json({ group: clean(group) });
   } catch (err) { res.status(500).json({ detail: err.message }); }
 });
@@ -693,7 +693,7 @@ app.post('/api/chat/groups/:groupId/messages', authenticate, async (req, res) =>
   try {
     const group = await ChatGroup.findOne({ id: req.params.groupId });
     if (!group) return res.status(404).json({ detail: 'Group not found' });
-    const msg = { id: uuidv4(), group_id: req.params.groupId, sender_id: req.user.id, sender_name: req.user.name, message: req.body.message, created_at: now() };
+    const msg = { id: randomUUID(), group_id: req.params.groupId, sender_id: req.user.id, sender_name: req.user.name, message: req.body.message, created_at: now() };
     await ChatMessage.create(msg);
     io.to(req.params.groupId).emit('new_message', msg);
     res.json({ message: msg });
@@ -742,7 +742,7 @@ io.on('connection', async (socket) => {
   socket.on('send_message', async (data) => {
     const user = sidUserMap[socket.id];
     if (!user || !data?.group_id || !data?.message) return;
-    const msg = { id: uuidv4(), group_id: data.group_id, sender_id: user.id, sender_name: user.name, message: data.message, created_at: now() };
+    const msg = { id: randomUUID(), group_id: data.group_id, sender_id: user.id, sender_name: user.name, message: data.message, created_at: now() };
     await ChatMessage.create(msg);
     io.to(data.group_id).emit('new_message', msg);
   });
@@ -767,7 +767,7 @@ async function seedData() {
     let existing = await User.findOne({ email: ADMIN_EMAIL });
     if (!existing) {
       const hash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-      await User.create({ id: uuidv4(), email: ADMIN_EMAIL, password_hash: hash, name: 'Principal', role: 'principal', is_approved: true, created_at: now() });
+      await User.create({ id: randomUUID(), email: ADMIN_EMAIL, password_hash: hash, name: 'Principal', role: 'principal', is_approved: true, created_at: now() });
       console.log(`Principal account created: ${ADMIN_EMAIL}`);
     } else {
       const match = await bcrypt.compare(ADMIN_PASSWORD, existing.password_hash);
@@ -782,13 +782,13 @@ async function seedData() {
     const classCount = await Class.countDocuments();
     if (classCount === 0) {
       for (let i = 1; i <= 10; i++) {
-        const classId = uuidv4();
+        const classId = randomUUID();
         await Class.create({ id: classId, name: String(i), order: i, created_at: now() });
         for (const sectionName of ['A', 'B', 'C']) {
-          await Section.create({ id: uuidv4(), class_id: classId, name: sectionName, class_teacher_id: null, created_at: now() });
+          await Section.create({ id: randomUUID(), class_id: classId, name: sectionName, class_teacher_id: null, created_at: now() });
         }
         for (const subjectName of DEFAULT_SUBJECTS) {
-          await Subject.create({ id: uuidv4(), name: subjectName, class_id: classId, teacher_id: null, created_at: now() });
+          await Subject.create({ id: randomUUID(), name: subjectName, class_id: classId, teacher_id: null, created_at: now() });
         }
       }
       console.log('Seeded classes 1-10 with sections and subjects');
