@@ -35,6 +35,7 @@ export default function Root({ children }: PropsWithChildren) {
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
+          backgroundColor: "#F7F9FC",
         }}
       >
         {children}

@@ -17,17 +17,24 @@ export default function SectionDetailScreen() {
   const router = useRouter();
   const [section, setSection] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [classTeacherOnly, setClassTeacherOnly] = useState(false);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [studentName, setStudentName] = useState('');
   const [studentRoll, setStudentRoll] = useState('');
 
-  useFocusEffect(useCallback(() => { loadSection(); }, []));
+  useFocusEffect(useCallback(() => { loadSection(); }, [id, user?.id, user?.role]));
 
   const loadSection = async () => {
     try {
       setLoading(true);
-      const data = await apiCall(`/api/sections/${id}`);
-      setSection(data.section);
+      const sectionRes = await apiCall(`/api/sections/${id}`);
+      setSection(sectionRes.section);
+      if (user?.role === 'teacher') {
+        const td = await apiCall('/api/teachers/my-data');
+        setClassTeacherOnly(!!td.class_teacher_only);
+      } else {
+        setClassTeacherOnly(false);
+      }
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
@@ -51,6 +58,9 @@ export default function SectionDetailScreen() {
   };
 
   if (loading) return <View style={styles.loadingContainer}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
+
+  const isClassTeacherHere = section?.class_teacher_id === user?.id;
+  const canManageStudents = user?.role === 'principal' || isClassTeacherHere;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -76,18 +86,20 @@ export default function SectionDetailScreen() {
         </View>
 
         {/* Quick Actions */}
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            testID="enter-marks-btn"
-            style={styles.actionCard}
-            onPress={() => router.push(`/marks-entry?sectionId=${id}&classId=${section?.class_id}`)}
-          >
-            <Ionicons name="create-outline" size={22} color={COLORS.primary} />
-            <Text style={styles.actionText}>Enter Marks</Text>
-          </TouchableOpacity>
+        <View style={[styles.actionRow, classTeacherOnly && styles.actionRowStack]}>
+          {!classTeacherOnly && (
+            <TouchableOpacity
+              testID="enter-marks-btn"
+              style={styles.actionCard}
+              onPress={() => router.push(`/marks-entry?sectionId=${id}&classId=${section?.class_id}`)}
+            >
+              <Ionicons name="create-outline" size={22} color={COLORS.primary} />
+              <Text style={styles.actionText}>Enter Marks</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             testID="attendance-btn"
-            style={styles.actionCard}
+            style={[styles.actionCard, classTeacherOnly && styles.actionCardFull]}
             onPress={() => router.push(`/attendance?sectionId=${id}`)}
           >
             <Ionicons name="checkbox-outline" size={22} color={COLORS.teal} />
@@ -98,10 +110,12 @@ export default function SectionDetailScreen() {
         {/* Students */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Students ({section?.students?.length || 0})</Text>
-          <TouchableOpacity testID="add-student-btn" style={styles.addBtn} onPress={() => setShowAddStudent(true)}>
-            <Ionicons name="add" size={18} color={COLORS.primary} />
-            <Text style={styles.addBtnText}>Add</Text>
-          </TouchableOpacity>
+          {canManageStudents && (
+            <TouchableOpacity testID="add-student-btn" style={styles.addBtn} onPress={() => setShowAddStudent(true)}>
+              <Ionicons name="add" size={18} color={COLORS.primary} />
+              <Text style={styles.addBtnText}>Add</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {section?.students?.length > 0 ? section.students.map((student: any) => (
@@ -118,12 +132,14 @@ export default function SectionDetailScreen() {
               <Text style={styles.studentName}>{student.name}</Text>
               <Text style={styles.studentRoll}>Roll No: {student.roll_number}</Text>
             </View>
-            <TouchableOpacity
-              testID={`delete-student-${student.id}`}
-              onPress={() => deleteStudent(student.id, student.name)}
-            >
-              <Ionicons name="trash-outline" size={18} color={COLORS.error} />
-            </TouchableOpacity>
+            {canManageStudents && (
+              <TouchableOpacity
+                testID={`delete-student-${student.id}`}
+                onPress={() => deleteStudent(student.id, student.name)}
+              >
+                <Ionicons name="trash-outline" size={18} color={COLORS.error} />
+              </TouchableOpacity>
+            )}
           </TouchableOpacity>
         )) : (
           <View style={styles.emptyCard}>
@@ -181,6 +197,8 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: 14, color: COLORS.textSec },
   infoValue: { fontSize: 14, fontWeight: '600', color: COLORS.text },
   actionRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  actionRowStack: { flexDirection: 'column' },
+  actionCardFull: { width: '100%' },
   actionCard: {
     flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, padding: 16,
     alignItems: 'center', gap: 8, borderWidth: 1, borderColor: COLORS.border,

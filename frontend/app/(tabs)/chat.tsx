@@ -31,20 +31,26 @@ export default function ChatScreen() {
     <TouchableOpacity
       testID={`group-card-${item.id}`}
       style={[s.groupCard, isDesktop && s.groupCardDesktop]}
-      onPress={() => router.push(`/chat-room?id=${item.id}&name=${encodeURIComponent(item.name)}`)}
+      onPress={() =>
+        router.push(
+          `/chat-room?id=${item.id}&name=${encodeURIComponent(item.chat_title || item.name)}${
+            item.kind === 'direct' ? '&dm=1' : ''
+          }`
+        )
+      }
     >
       <View style={s.groupAvatar}>
-        <Ionicons name="people" size={24} color={COLORS.primary} />
+        <Ionicons name={item.kind === 'direct' ? 'person' : 'people'} size={24} color={COLORS.primary} />
       </View>
       <View style={s.groupInfo}>
-        <Text style={s.groupName}>{item.name}</Text>
+        <Text style={s.groupName}>{item.chat_title || item.name}</Text>
         <Text style={s.groupLastMsg} numberOfLines={1}>
           {item.last_message ? `${item.last_message.sender_name}: ${item.last_message.message}` : 'No messages yet'}
         </Text>
       </View>
       <View style={s.groupMeta}>
         <Text style={s.memberCount}>{item.member_count}</Text>
-        <Ionicons name="people-outline" size={14} color={COLORS.textSec} />
+        <Ionicons name={item.kind === 'direct' ? 'person-outline' : 'people-outline'} size={14} color={COLORS.textSec} />
       </View>
     </TouchableOpacity>
   );

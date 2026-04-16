@@ -12,7 +12,8 @@ const COLORS = {
 };
 
 export default function ChatRoomScreen() {
-  const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
+  const { id, name, dm } = useLocalSearchParams<{ id: string; name: string; dm?: string }>();
+  const isDirect = dm === '1' || dm === 'true';
   const { user, token } = useAuth();
   const router = useRouter();
   const [messages, setMessages] = useState<any[]>([]);
@@ -78,7 +79,7 @@ export default function ChatRoomScreen() {
         </TouchableOpacity>
         <View style={styles.topInfo}>
           <Text style={styles.topTitle}>{decodeURIComponent(name || '')}</Text>
-          <Text style={styles.topSubtitle}>Group Chat</Text>
+          <Text style={styles.topSubtitle}>{isDirect ? 'Direct message' : 'Group chat'}</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>

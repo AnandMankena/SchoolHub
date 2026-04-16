@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+import { getBackendBaseUrl } from '../utils/backendUrl';
 
 interface User {
   id: string;
@@ -30,9 +29,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = useCallback(async () => {
     try {
+      const base = getBackendBaseUrl();
       const storedToken = await AsyncStorage.getItem('auth_token');
-      if (storedToken) {
-        const res = await fetch(`${API_URL}/api/auth/me`, {
+      if (storedToken && base) {
+        const res = await fetch(`${base}/api/auth/me`, {
           headers: { Authorization: `Bearer ${storedToken}` }
         });
         if (res.ok) {
@@ -55,7 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [checkAuth]);
 
   const login = async (email: string, password: string) => {
-    const res = await fetch(`${API_URL}/api/auth/login`, {
+    const base = getBackendBaseUrl();
+    if (!base) {
+      throw new Error('EXPO_PUBLIC_BACKEND_URL is not set. Add it to frontend/.env and restart Expo.');
+    }
+    const res = await fetch(`${base}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -74,7 +78,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (name: string, email: string, password: string) => {
-    const res = await fetch(`${API_URL}/api/auth/register`, {
+    const base = getBackendBaseUrl();
+    if (!base) {
+      throw new Error('EXPO_PUBLIC_BACKEND_URL is not set. Add it to frontend/.env and restart Expo.');
+    }
+    const res = await fetch(`${base}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password })
@@ -97,8 +105,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
-    if (token) {
-      const res = await fetch(`${API_URL}/api/auth/me`, {
+    const base = getBackendBaseUrl();
+    if (token && base) {
+      const res = await fetch(`${base}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {

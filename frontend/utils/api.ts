@@ -1,8 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+import { getBackendBaseUrl } from './backendUrl';
 
 export async function apiCall(endpoint: string, options: RequestInit = {}) {
+  const base = getBackendBaseUrl();
+  if (!base) {
+    throw new Error(
+      'EXPO_PUBLIC_BACKEND_URL is not set. Add it to frontend/.env (e.g. EXPO_PUBLIC_BACKEND_URL=http://localhost:8001) and restart Expo.'
+    );
+  }
+
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const token = await AsyncStorage.getItem('auth_token');
   const headers: any = {
     'Content-Type': 'application/json',
@@ -10,12 +17,37 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
     ...options.headers,
   };
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const requestUrl = `${base}${path}`;
+  const response = await fetch(requestUrl, {
     ...options,
     headers,
   });
 
-  const data = await response.json();
+  const bodyText = await response.text();
+  const ct = response.headers.get('content-type') || '';
+  const finalUrl = response.url || requestUrl;
+
+  if (!ct.includes('application/json')) {
+    const preMatch = bodyText.match(/<pre[^>]*>([^<]*)<\/pre>/i);
+    const expressHint = preMatch ? preMatch[1].trim() : '';
+    const extra =
+      expressHint && expressHint.includes('Cannot GET')
+        ? ` (${expressHint})`
+        : '';
+    throw new Error(
+      `API returned HTML or non-JSON (${response.status}) from ${finalUrl}${extra}. ` +
+        `Use EXPO_PUBLIC_BACKEND_URL=http://localhost:8001 (no /api suffix). ` +
+        `Restart the backend from the SchoolHub/backend folder after pulling updates so /api/analytics exists. ` +
+        `Check http://localhost:8001/api/health — it should return JSON {"ok":true,...}.`
+    );
+  }
+
+  let data: any;
+  try {
+    data = JSON.parse(bodyText);
+  } catch {
+    throw new Error(`Invalid JSON from ${finalUrl} (${response.status})`);
+  }
 
   if (!response.ok) {
     const detail = data.detail;

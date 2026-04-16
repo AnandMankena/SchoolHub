@@ -98,6 +98,55 @@ class TestDashboard:
         assert data["total_sections"] == 30, "Should have 30 sections (10 classes × 3 sections)"
 
 
+class TestAnalytics:
+    """School analytics (principal full school; class teacher scoped)"""
+
+    def test_analytics_principal(self, base_url, api_client, auth_headers):
+        response = api_client.get(f"{base_url}/api/analytics", headers=auth_headers)
+        assert response.status_code == 200, f"Analytics failed: {response.text}"
+        data = response.json()
+        assert data.get("scoped_class_teacher") is False
+        assert "date" in data
+        assert "total_students" in data
+        assert "attendance_today" in data
+        at = data["attendance_today"]
+        for key in ("marked", "present", "absent", "late", "unmarked", "rate_of_total", "rate_of_marked"):
+            assert key in at
+        assert "marks" in data
+        mk = data["marks"]
+        for key in ("graded_entries", "average_percentage", "pass_count", "fail_count", "pass_rate", "fail_rate"):
+            assert key in mk
+        assert "attendance_trend" in data
+        assert len(data["attendance_trend"]) == 7
+        assert "class_avg" in data
+        assert isinstance(data["class_avg"], list)
+        assert "subject_group_avg" in data
+        assert "teacher_one_on_one" in data
+        assert "faculty" in data
+        assert isinstance(data["subject_group_avg"], list)
+        assert isinstance(data["teacher_one_on_one"], list)
+        assert isinstance(data["faculty"], list)
+
+    def test_class_teacher_analytics(self, base_url, api_client):
+        """Scoped analytics for demo class teacher (requires seed)."""
+        r = api_client.post(
+            f"{base_url}/api/auth/login",
+            json={"email": "classteacher@schoolhub.demo", "password": "ClassTeacher@123"},
+        )
+        if r.status_code != 200:
+            pytest.skip(f"Class teacher login not available: {r.text}")
+        token = r.json().get("token")
+        assert token
+        headers = {"Authorization": f"Bearer {token}"}
+        response = api_client.get(f"{base_url}/api/teachers/my-class-analytics", headers=headers)
+        assert response.status_code == 200, response.text
+        data = response.json()
+        assert data.get("scoped_class_teacher") is True
+        assert "scope_label" in data
+        assert "attendance_today" in data
+        assert "marks" in data
+
+
 class TestClasses:
     """Class management endpoint tests"""
 

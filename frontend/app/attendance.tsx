@@ -1,8 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { apiCall } from '../utils/api';
 import { Ionicons } from '@expo/vector-icons';
+
+const todayStr = () => new Date().toISOString().split('T')[0];
+
+type AttendanceStatus = 'present' | 'absent' | 'late';
+const STATUS_ORDER: AttendanceStatus[] = ['present', 'absent', 'late'];
+const STATUS_LABEL: Record<AttendanceStatus, string> = {
+  present: 'P',
+  absent: 'A',
+  late: 'L',
+};
 
 const COLORS = {
   bg: '#F7F9FC', surface: '#FFFFFF', primary: '#4361EE', primaryLight: '#E8EFFF',
@@ -14,43 +24,47 @@ export default function AttendanceScreen() {
   const { sectionId } = useLocalSearchParams<{ sectionId: string }>();
   const router = useRouter();
   const [students, setStudents] = useState<any[]>([]);
-  const [attendanceMap, setAttendanceMap] = useState<Record<string, string>>({});
+  const [attendanceMap, setAttendanceMap] = useState<Record<string, AttendanceStatus>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [date] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayStr);
   const [sectionInfo, setSectionInfo] = useState<any>(null);
 
-  useEffect(() => { loadData(); }, []);
+  useFocusEffect(
+    useCallback(() => {
+      setDate(todayStr());
+    }, [])
+  );
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
+    if (!sectionId) return;
     try {
+      setLoading(true);
       const sectionData = await apiCall(`/api/sections/${sectionId}`);
       setSectionInfo(sectionData.section);
       setStudents(sectionData.section.students || []);
-      // Load existing attendance
       try {
         const attData = await apiCall(`/api/attendance?section_id=${sectionId}&date=${date}`);
-        const map: Record<string, string> = {};
-        (attData.attendance || []).forEach((a: any) => { map[a.student_id] = a.status; });
-        // Default to present
+        const map: Record<string, AttendanceStatus> = {};
+        (attData.attendance || []).forEach((a: any) => {
+          const st = a.status as string;
+          if (st === 'present' || st === 'absent' || st === 'late') map[a.student_id] = st;
+        });
         sectionData.section.students?.forEach((s: any) => {
           if (!map[s.id]) map[s.id] = 'present';
         });
         setAttendanceMap(map);
       } catch {
-        const map: Record<string, string> = {};
+        const map: Record<string, AttendanceStatus> = {};
         sectionData.section.students?.forEach((s: any) => { map[s.id] = 'present'; });
         setAttendanceMap(map);
       }
     } catch (e) { console.error(e); } finally { setLoading(false); }
-  };
+  }, [sectionId, date]);
 
-  const toggleStatus = (studentId: string) => {
-    setAttendanceMap(prev => ({
-      ...prev,
-      [studentId]: prev[studentId] === 'present' ? 'absent' : prev[studentId] === 'absent' ? 'late' : 'present'
-    }));
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const saveAttendance = async () => {
     setSaving(true);
@@ -64,16 +78,14 @@ export default function AttendanceScreen() {
     } catch (e: any) { Alert.alert('Error', e.message); } finally { setSaving(false); }
   };
 
-  const getStatusColor = (status: string) => {
-    if (status === 'present') return COLORS.success;
-    if (status === 'absent') return COLORS.error;
-    return COLORS.yellow;
+  const setStatus = (studentId: string, status: AttendanceStatus) => {
+    setAttendanceMap(prev => ({ ...prev, [studentId]: status }));
   };
 
-  const getStatusIcon = (status: string): "checkmark-circle" | "close-circle" | "time" => {
-    if (status === 'present') return 'checkmark-circle';
-    if (status === 'absent') return 'close-circle';
-    return 'time';
+  const pillColors = (status: AttendanceStatus) => {
+    if (status === 'present') return { border: COLORS.success, activeBg: '#E8FFF8', text: COLORS.success };
+    if (status === 'absent') return { border: COLORS.error, activeBg: '#FFF0F0', text: COLORS.error };
+    return { border: COLORS.yellow, activeBg: '#FFF8E8', text: COLORS.yellow };
   };
 
   const presentCount = Object.values(attendanceMap).filter(s => s === 'present').length;
@@ -94,7 +106,10 @@ export default function AttendanceScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.dateCard}>
           <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
-          <Text style={styles.dateText}>{date}</Text>
+          <View style={styles.dateBlock}>
+            <Text style={styles.dateLabel}>Today</Text>
+            <Text style={styles.dateText}>{date}</Text>
+          </View>
           {sectionInfo && <Text style={styles.sectionText}>Class {sectionInfo.class_name} - {sectionInfo.name}</Text>}
         </View>
 
@@ -113,28 +128,42 @@ export default function AttendanceScreen() {
           </View>
         </View>
 
-        <Text style={styles.hint}>Tap to toggle: Present / Absent / Late</Text>
+        <Text style={styles.hint}>Tap P, A, or L for each student (today’s roll call).</Text>
 
         {students.map(student => {
           const status = attendanceMap[student.id] || 'present';
           return (
-            <TouchableOpacity
-              key={student.id}
-              testID={`attendance-${student.id}`}
-              style={styles.studentRow}
-              onPress={() => toggleStatus(student.id)}
-            >
+            <View key={student.id} style={styles.studentRow} testID={`attendance-row-${student.id}`}>
               <View style={styles.studentInfo}>
                 <Text style={styles.studentName}>{student.name}</Text>
                 <Text style={styles.studentRoll}>Roll: {student.roll_number}</Text>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(status) + '20' }]}>
-                <Ionicons name={getStatusIcon(status)} size={18} color={getStatusColor(status)} />
-                <Text style={[styles.statusText, { color: getStatusColor(status) }]}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </Text>
+              <View style={styles.statusBtns}>
+                {STATUS_ORDER.map((st) => {
+                  const c = pillColors(st);
+                  const selected = status === st;
+                  return (
+                    <TouchableOpacity
+                      key={st}
+                      testID={`attendance-${st}-${student.id}`}
+                      accessibilityLabel={`${STATUS_LABEL[st]} for ${student.name}`}
+                      style={[
+                        styles.statusPill,
+                        { borderColor: c.border },
+                        selected && { backgroundColor: c.activeBg, borderWidth: 2 },
+                        !selected && styles.statusPillMuted,
+                      ]}
+                      onPress={() => setStatus(student.id, st)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.statusPillText, { color: selected ? c.text : COLORS.textSec }]}>
+                        {STATUS_LABEL[st]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
-            </TouchableOpacity>
+            </View>
           );
         })}
 
@@ -153,24 +182,31 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
   topTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text },
   scroll: { padding: 24, paddingTop: 8 },
-  dateCard: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: COLORS.surface, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: COLORS.border, marginBottom: 16 },
-  dateText: { fontSize: 16, fontWeight: '600', color: COLORS.text },
-  sectionText: { fontSize: 14, color: COLORS.textSec, marginLeft: 'auto' },
+  dateCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: COLORS.surface, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: COLORS.border, marginBottom: 16 },
+  dateBlock: { flex: 1 },
+  dateLabel: { fontSize: 12, fontWeight: '600', color: COLORS.textSec, textTransform: 'uppercase', letterSpacing: 0.5 },
+  dateText: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginTop: 2 },
+  sectionText: { fontSize: 13, color: COLORS.textSec, maxWidth: '42%', textAlign: 'right' },
   summaryRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   summaryCard: { flex: 1, borderRadius: 12, padding: 12, alignItems: 'center' },
   summaryNum: { fontSize: 24, fontWeight: '800' },
   summaryLabel: { fontSize: 12, color: COLORS.textSec, fontWeight: '600' },
   hint: { fontSize: 13, color: COLORS.textSec, marginBottom: 12, fontStyle: 'italic' },
   studentRow: {
-    backgroundColor: COLORS.surface, borderRadius: 12, padding: 14, marginBottom: 8,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: COLORS.surface, borderRadius: 12, padding: 14, marginBottom: 10,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12,
     borderWidth: 1, borderColor: COLORS.border,
   },
-  studentInfo: { flex: 1 },
+  studentInfo: { flex: 1, minWidth: 0 },
   studentName: { fontSize: 15, fontWeight: '600', color: COLORS.text },
-  studentRoll: { fontSize: 12, color: COLORS.textSec },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  statusText: { fontSize: 13, fontWeight: '600' },
+  studentRoll: { fontSize: 12, color: COLORS.textSec, marginTop: 2 },
+  statusBtns: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  statusPill: {
+    minWidth: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+  statusPillMuted: { backgroundColor: COLORS.bg, borderColor: COLORS.border },
+  statusPillText: { fontSize: 17, fontWeight: '800' },
   saveBtn: { backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 16 },
   saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
 });
