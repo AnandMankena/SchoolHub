@@ -1,5 +1,5 @@
 const express = require('express');
-const { Student, User, Class, Section } = require('../models');
+const { Student, User, Class, Section, Subject } = require('../models');
 const { authenticate } = require('../middleware/auth');
 const { getClassTeacherOnlySection } = require('../services/teacherScope');
 
@@ -31,6 +31,68 @@ router.get('/stats', authenticate, async (req, res) => {
     ]);
     res.json({ total_students, total_teachers, total_classes, pending_approvals, total_sections });
   } catch (err) { res.status(500).json({ detail: err.message }); }
+});
+
+router.get('/staff', authenticate, async (req, res) => {
+  try {
+    // Get principal info
+    const principal = await User.findOne({ role: 'principal' })
+      .select('-_id -__v -password_hash')
+      .lean();
+
+    // Get all approved teachers
+    const teachers = await User.find({ role: 'teacher', is_approved: true })
+      .select('-_id -__v -password_hash')
+      .sort({ name: 1 })
+      .lean();
+
+    // Get subjects for each teacher
+    const teacherIds = teachers.map(t => t.id);
+    const subjects = await Subject.find({ teacher_id: { $in: teacherIds } })
+      .select('teacher_id name class_id')
+      .lean();
+
+    // Get class info
+    const classIds = [...new Set(subjects.map(s => s.class_id))];
+    const classes = await Class.find({ id: { $in: classIds } })
+      .select('id name')
+      .lean();
+    const classMap = Object.fromEntries(classes.map(c => [c.id, c.name]));
+
+    // Get class teacher sections
+    const sections = await Section.find({ class_teacher_id: { $in: teacherIds } })
+      .select('class_teacher_id class_id name')
+      .lean();
+    const sectionMap = {};
+    for (const sec of sections) {
+      sectionMap[sec.class_teacher_id] = {
+        class_name: classMap[sec.class_id] || '?',
+        section: sec.name
+      };
+    }
+
+    // Organize subjects by teacher
+    const subjectsByTeacher = {};
+    for (const sub of subjects) {
+      if (!subjectsByTeacher[sub.teacher_id]) {
+        subjectsByTeacher[sub.teacher_id] = [];
+      }
+      subjectsByTeacher[sub.teacher_id].push({
+        name: sub.name,
+        class_name: classMap[sub.class_id] || '?'
+      });
+    }
+
+    // Attach subjects to teachers
+    for (const teacher of teachers) {
+      teacher.subjects = subjectsByTeacher[teacher.id] || [];
+      teacher.class_teacher_section = sectionMap[teacher.id] || null;
+    }
+
+    res.json({ principal, teachers });
+  } catch (err) { 
+    res.status(500).json({ detail: err.message }); 
+  }
 });
 
 module.exports = router;
