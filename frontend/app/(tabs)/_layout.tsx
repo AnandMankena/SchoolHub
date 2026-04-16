@@ -3,11 +3,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const COLORS = {
-  primary: '#4361EE', bg: '#F7F9FC', surface: '#FFFFFF',
-  textSec: '#707A8A', border: '#EAECEF',
-};
+import { COLORS } from '../../constants/colors';
 
 export default function TabLayout() {
   const { user, loading } = useAuth();
@@ -35,13 +31,17 @@ export default function TabLayout() {
         tabBarInactiveTintColor: COLORS.textSec,
         tabBarStyle: {
           backgroundColor: COLORS.surface,
-          borderTopWidth: 1,
-          borderTopColor: COLORS.border,
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 60,
+          borderTopWidth: 0,
+          paddingTop: 10,
+          paddingBottom: 10,
+          height: 65,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 8,
         },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '700', marginTop: 4 },
       }}
     >
       <Tabs.Screen
