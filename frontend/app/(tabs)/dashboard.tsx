@@ -22,7 +22,7 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const isDesktop = isWeb && width > 768;
 
-  useFocusEffect(useCallback(() => { loadData(); }, []));
+  useFocusEffect(useCallback(() => { loadData(); }, [user?.id, user?.role]));
 
   const loadData = async () => {
     try {
@@ -134,6 +134,24 @@ export default function DashboardScreen() {
                       </View>
                     </TouchableOpacity>
                   </View>
+
+                  <TouchableOpacity
+                    testID="action-analytics"
+                    style={[s.analyticsBanner, isDesktop && s.analyticsBannerDesktop]}
+                    onPress={() => router.push('/analytics')}
+                    activeOpacity={0.85}
+                  >
+                    <View style={[s.analyticsIconWrap, { backgroundColor: COLORS.primaryLight }]}>
+                      <Ionicons name="bar-chart" size={28} color={COLORS.primary} />
+                    </View>
+                    <View style={s.analyticsTextWrap}>
+                      <Text style={s.analyticsTitle}>Analytics</Text>
+                      <Text style={s.analyticsSub}>
+                        Attendance, marks, trends, and class performance
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={22} color={COLORS.textSec} />
+                  </TouchableOpacity>
                 </View>
 
                 <View style={isDesktop ? s.desktopCol40 : undefined}>
@@ -189,6 +207,23 @@ export default function DashboardScreen() {
                       <Text style={s.ctBtnText}>Attendance</Text>
                     </TouchableOpacity>
                   </View>
+                  <TouchableOpacity
+                    testID="ct-analytics-banner"
+                    style={[s.analyticsBanner, isDesktop && s.analyticsBannerDesktop, { marginTop: 14 }]}
+                    onPress={() => router.push('/analytics')}
+                    activeOpacity={0.85}
+                  >
+                    <View style={[s.analyticsIconWrap, { backgroundColor: COLORS.primaryLight }]}>
+                      <Ionicons name="bar-chart" size={24} color={COLORS.primary} />
+                    </View>
+                    <View style={s.analyticsTextWrap}>
+                      <Text style={s.analyticsTitle}>Class analytics</Text>
+                      <Text style={s.analyticsSub}>
+                        Attendance and marks for your section
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={22} color={COLORS.textSec} />
+                  </TouchableOpacity>
                 </View>
               )}
 
@@ -263,6 +298,31 @@ const s = StyleSheet.create({
   actionIcon: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   actionText: { fontSize: 14, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
   actionSubtext: { fontSize: 12, color: COLORS.textSec, marginTop: 2 },
+  analyticsBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: 14,
+  },
+  analyticsBannerDesktop: {
+    padding: 20,
+    marginTop: 20,
+  },
+  analyticsIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  analyticsTextWrap: { flex: 1 },
+  analyticsTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text },
+  analyticsSub: { fontSize: 13, color: COLORS.textSec, marginTop: 4, lineHeight: 18 },
   // Info card
   infoCard: {
     backgroundColor: COLORS.surface, borderRadius: 16, padding: 20,
